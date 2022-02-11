@@ -1,10 +1,11 @@
 import Image from 'next/image'
-import React from 'react'
+import React, { useContext } from 'react'
 import { RiSettings3Fill } from 'react-icons/ri'
 import ethLogo from '../assets/eth.png'
 import { AiOutlineDown } from 'react-icons/ai'
+import { TransactionContext } from '../context/TransactionContext'
 const style = {
-  wrapper: `w-screen flex items-center justify-center mt-14`,
+  wrapper: `w-screen  flex items-center justify-center mt-14`,
   content: `bg-[#191B1F] w-[40rem] rounded-2xl p-4`,
   formHeader: `px-2 flex items-center justify-between font-semibold text-xl`,
   transferPropContainer: `bg-[#20242A] my-3 rounded-2xl p-6 text-3xl  border border-[#20242A] hover:border-[#41444F]  flex justify-between`,
@@ -34,6 +35,19 @@ const customStyles = {
 }
 
 const Main = () => {
+  const { formData, handleChange, sendTransaction } =
+    useContext(TransactionContext)
+
+  //  ! for handling our submit
+  const handleSubmit = async (e) => {
+    const { addressTo, amount } = formData
+
+    e.preventDefault()
+
+    if (!addressTo || !amount) return
+    // console.log('👉🏻  trans', sendTransaction())
+    sendTransaction()
+  }
   return (
     <div className={style.wrapper}>
       {/* Content */}
@@ -43,7 +57,7 @@ const Main = () => {
           <span>Swap</span>
           {/* setting logo */}
           <div>
-            <RiSettings3Fill />
+            <RiSettings3Fill className={'animate-spin cursor-pointer'} />
           </div>
         </div>
         {/* Transfer prop container */}

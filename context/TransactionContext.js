@@ -1,5 +1,7 @@
+import { ethers } from 'ethers'
 import React, { useEffect, useState } from 'react'
-
+import { contractAbi, contractAddress } from '../lib/constants'
+import { client } from '../lib/sanityClinet'
 // ! TransactionContext
 export const TransactionContext = React.createContext()
 
@@ -10,12 +12,45 @@ if (typeof window !== 'undefined') {
   eth = window.ethereum
 }
 
+//! getEthereumContract
+const getEthereumContract = () => {
+  const provider = new ethers.providers.Web3Provider(eth) //! we call our provider
+  const signer = provider.getSigner() // ! person who is signer which means we or sender
+  const transactionContract = new ethers.Contract(
+    contractAddress,
+    contractAbi,
+    signer
+  ) // ! we create a new contract
+  return transactionContract
+}
+
 export const TransactionProvider = ({ children }) => {
   const [currentAccount, setCurrentAccount] = useState()
+  const [isLoading, setIsLoading] = useState(false)
+  const [formData, setFormData] = useState({
+    amount: '',
+    addressTo: '', // !sending address
+  })
   useEffect(() => {
     checkIfWalletIsConnected()
     // ? every time refresh the page, we will check if the wallet is connected
   }, [])
+
+  // ! user profile
+  useEffect(() => {
+    if (!currentAccount) return
+    ;(async () => {
+      const userDoc = {
+        _type: 'users',
+        _id: currentAccount,
+        address: currentAccount,
+        UserName: 'unnamed',
+        address: currentAccount,
+      }
+      // Create a new document if it doesn't exist
+      await client.createIfNotExists(userDoc)
+    })()
+  }, [currentAccount])
   const connectWallet = async (metamask = eth) => {
     try {
       //! if there is no metamask then alert the user to install
@@ -62,10 +97,16 @@ export const TransactionProvider = ({ children }) => {
 
       if (!metamask) return alert('Please install metamask ')
       const { addressTo, amount } = formData
+      // console.log('🚀 formData', formData)
       //! Transaction contract
       const transactionContract = getEthereumContract()
+      console.log(
+        '👉🏻   ~ TransactionProvider ~ transactionContract',
+        transactionContract
+      )
 
       const parsedAmount = ethers.utils.parseEther(amount)
+      // console.log('parsedAmount', parsedAmount)
       //! send transaction
       await metamask.request({
         method: 'eth_sendTransaction',
@@ -78,6 +119,7 @@ export const TransactionProvider = ({ children }) => {
           },
         ],
       })
+
       //! transaction hash
       const transactionHash = await transactionContract.publishTransaction(
         addressTo,
@@ -85,11 +127,62 @@ export const TransactionProvider = ({ children }) => {
         `Transferring ETH ${parsedAmount} to ${addressTo}`,
         'TRANSFER'
       )
-      
+
+      setIsLoading(true)
+
+      await transactionHash.wait()
+
+      await saveTransaction(
+        transactionHash.hash,
+        amount,
+        connectedAccount,
+        addressTo
+      )
+
+      // setIsLoading(false)
+
+      //! database part
     } catch (error) {
       console.error(error)
-      throw new Error('No ethereum object.')
     }
+  }
+
+  const handleChange = (e, name) => {
+    setFormData((prevState) => ({ ...prevState, [name]: e.target.value }))
+  }
+  //! for saveTransaction and in our sanity database
+  const saveTransaction = async (
+    txHash,
+    amount,
+    fromAddress = currentAccount,
+    toAddress
+  ) => {
+    const txDoc = {
+      _type: 'transactions',
+      _id: txHash,
+      fromAddress: fromAddress,
+      toAddress: toAddress,
+      timestamp: new Date(Date.now()).toISOString(),
+      txHash: txHash,
+      amount: parseFloat(amount),
+    }
+
+    // ! if the transaction not exists in our sanity then we will create
+    await client.createIfNotExists(txDoc)
+    // ! for our user tr session
+    await client
+      .patch(currentAccount)
+      .setIfMissing({ transactions: [] })
+      .insert('after', 'transactions[-1]', [
+        {
+          _key: txHash,
+          _ref: txHash,
+          _type: 'reference',
+        },
+      ])
+      .commit() // ! meaning that write all of this and commit it is sanity
+
+    return
   }
 
   return (
@@ -98,6 +191,10 @@ export const TransactionProvider = ({ children }) => {
       value={{
         connectWallet,
         currentAccount,
+        sendTransaction,
+        handleChange,
+        formData,
+        isLoading,
       }}
     >
       {children}

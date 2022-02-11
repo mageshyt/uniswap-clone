@@ -9,9 +9,9 @@ import { TransactionContext } from '../context/TransactionContext'
 
 const styles = {
   container: 'flex justify-between items-center w-screen p-4',
-  headerLogo: `flex  items-center justify-start`,
+  headerLogo: `flex  w-1/4  items-center justify-start`,
   //! nac styles
-  nav: 'flex-1 center',
+  nav: 'flex-1 hidden md:inline-flex center',
   navContainer: 'flex  bg-[#191B1F] rounded-3xl',
   navItem:
     'px-4 py-2 m-2 flex items-center text-lg font-semibold text-[0.9rem] cursor-pointer rounded-3xl',
@@ -31,11 +31,15 @@ const styles = {
 const Header = () => {
   const [selectedOption, setSelectedOption] = useState('swap')
   const { connectWallet, currentAccount } = useContext(TransactionContext)
-  console.log(
-    '🚀 ~ file: Header.jsx ~ line 34 ~ Header ~ connectWallet',
-    connectWallet,
-    currentAccount
-  )
+  // !use name
+  const [UserName, setUserName] = useState()
+  //! everytime we change the account we need to update the name
+  useEffect(() => {
+    if (!currentAccount) return
+    setUserName(
+      `${currentAccount.slice(0, 6)}...${currentAccount.slice(9, 13)}`
+    )
+  }, [currentAccount])
 
   return (
     <div className={styles.container}>
@@ -81,15 +85,6 @@ const Header = () => {
             Vote
           </div>
           {/* charts */}
-          <div
-            // ! active one will have a different color
-            className={`${styles.navItem} ${
-              selectedOption === 'charts' && styles.activeNav
-            }`}
-            onClick={() => setSelectedOption('charts')}
-          >
-            charts
-          </div>
 
           {/* upArrow */}
           <a
@@ -112,7 +107,7 @@ const Header = () => {
             {/* Eth logo */}
             <Image src={ethLogo} alt="eth logo" height={20} width={20} />
           </div>
-          <p>Ethereum</p>
+          <p className="hidden lg:block">Ethereum</p>
           {/* down arrow btn */}
           <div className={styles.buttonIconContainer}>
             <AiOutlineDown />
@@ -121,7 +116,7 @@ const Header = () => {
         {/* button-2 */}
         {currentAccount ? (
           <div className={`${styles.buttonAccent} ${styles.buttonPadding} `}>
-            0x9a9e67....
+            {UserName}
           </div>
         ) : (
           <div
