@@ -31,6 +31,8 @@ const styles = {
 const Header = () => {
   const [selectedOption, setSelectedOption] = useState('swap')
   const { connectWallet, currentAccount } = useContext(TransactionContext)
+  console.log('👉🏻   ~ Header ~ currentAccount', currentAccount)
+
   // !use name
   const [UserName, setUserName] = useState()
   //! everytime we change the account we need to update the name

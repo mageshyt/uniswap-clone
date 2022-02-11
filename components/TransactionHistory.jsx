@@ -7,7 +7,7 @@ import { TransactionContext } from '../context/TransactionContext'
 
 const style = {
   wrapper: `h-full font-medium text-xs md:text-sm text-white select-none h-full w-screen flex-1 pt-14 flex items-end justify-end pb-12 overflow-scroll px-8`,
-  txHistoryItem: `bg-[#424345]   rounded-lg px-4 py-2 my-2 flex items-center justify-end`,
+  txHistoryItem: `bg-[#262628]   rounded-lg px-4 py-2 my-2 flex items-center justify-end`,
   txDetails: `flex items-center `,
   toAddress: `text-[#f48706] mx-2`,
   txTimestamp: `mx-2`,
@@ -18,7 +18,7 @@ const TransactionHistory = () => {
   const { isLoading, currentAccount } = useContext(TransactionContext)
   //! History we pull fom sanity
   const [transactionHistory, setTransactionHistory] = useState()
-
+  // ! transactions fade animate
   useEffect(() => {
     ;(async () => {
       if (!isLoading && currentAccount) {

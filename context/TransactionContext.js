@@ -1,4 +1,5 @@
 import { ethers } from 'ethers'
+import { useRouter } from 'next/router'
 import React, { useEffect, useState } from 'react'
 import { contractAbi, contractAddress } from '../lib/constants'
 import { client } from '../lib/sanityClinet'
@@ -100,10 +101,6 @@ export const TransactionProvider = ({ children }) => {
       // console.log('🚀 formData', formData)
       //! Transaction contract
       const transactionContract = getEthereumContract()
-      console.log(
-        '👉🏻   ~ TransactionProvider ~ transactionContract',
-        transactionContract
-      )
 
       const parsedAmount = ethers.utils.parseEther(amount)
       // console.log('parsedAmount', parsedAmount)
@@ -127,7 +124,7 @@ export const TransactionProvider = ({ children }) => {
         `Transferring ETH ${parsedAmount} to ${addressTo}`,
         'TRANSFER'
       )
-
+      // ! here transaction is happening
       setIsLoading(true)
 
       await transactionHash.wait()
@@ -138,8 +135,8 @@ export const TransactionProvider = ({ children }) => {
         connectedAccount,
         addressTo
       )
-
-      // setIsLoading(false)
+      //  ! our transaction is finished
+      setIsLoading(false)
 
       //! database part
     } catch (error) {
@@ -185,6 +182,15 @@ export const TransactionProvider = ({ children }) => {
     return
   }
 
+  const router = useRouter()
+  // * lets trigger our loading model
+  useEffect(() => {
+    if (isLoading) {
+      router.push(`/?loading=${currentAccount}`)
+    } else {
+      router.push('/')
+    }
+  }, [isLoading])
   return (
     // * it create a global bucket and throwing the current account and wallet so any of out components can have access
     <TransactionContext.Provider
